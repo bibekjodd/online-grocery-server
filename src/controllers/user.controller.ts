@@ -6,6 +6,7 @@ import { hashPassword } from '@/lib/utils';
 import { handleAsync } from '@/middlewares/handle-async';
 import { selectUserSnapshot, users } from '@/schemas/user.schema';
 import { verifyAccounts } from '@/schemas/verify.schema';
+import { addNotification } from '@/services/notification.service';
 import { and, eq, gte } from 'drizzle-orm';
 
 export const registerUser = handleAsync(async (req, res) => {
@@ -21,7 +22,16 @@ export const registerUser = handleAsync(async (req, res) => {
   if (!user) {
     throw new BadRequestException('User with same email already exists');
   }
-  return res.json({ user });
+
+  const title = 'New account registered';
+  const message = `Welcome Mr/Mrs. ${user.name} to our platform. You are now eligible to buy/sell products.`;
+  sendMail({ to: user.email, subject: title, body: `<h3>${message}<h3>` });
+  addNotification({
+    title,
+    userId: user.id,
+    description: message
+  });
+  return res.status(201).json({ user });
 });
 
 export const getProfile = handleAsync(async (req, res) => {
@@ -48,6 +58,12 @@ export const deleteProfile = handleAsync(async (req, res) => {
   await db.delete(users).where(eq(users.id, req.user.id));
   req.session.destroy(() => {});
   req.logout(() => {});
+  sendMail({
+    to: req.user.email,
+    body: `<h3>Mr/Mrs. ${req.user.name} your account is deleted successfully from our and all your associated entites are removed from the platform.
+    You can always get back with simple registration. Thanks</h3>`,
+    subject: 'Account deleted'
+  });
   return res.json({ message: 'Profile deleted successfully' });
 });
 
@@ -120,6 +136,15 @@ export const verifyEmail = handleAsync<unknown, unknown, { code: string }>(
     db.delete(verifyAccounts)
       .where(eq(verifyAccounts.userId, req.user.id))
       .execute();
+    const title = 'Email Verified';
+    const message = `Your email is not verified. You are now eligible to list more than 10 products on our platform and explore many amazing features on our platform`;
+
+    sendMail({
+      to: req.user.email,
+      body: `<h3>${message}<h3/>`,
+      subject: title
+    });
+    addNotification({ title, userId: req.user.id, description: message });
 
     return res.json({ message: 'Your account is now verified!' });
   }

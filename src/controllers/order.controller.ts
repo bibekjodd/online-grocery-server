@@ -11,10 +11,12 @@ import {
   NotFoundException,
   UnauthorizedException
 } from '@/lib/exceptions';
+import { sendMail } from '@/lib/send-mail';
 import { handleAsync } from '@/middlewares/handle-async';
 import { orders, selectOrderSnapshot } from '@/schemas/order.schema';
 import { products, selectProductSnapshot } from '@/schemas/product.schema';
 import { selectUserSnapshot, users } from '@/schemas/user.schema';
+import { addNotification } from '@/services/notification.service';
 import { and, desc, eq, lt, sql } from 'drizzle-orm';
 
 export const placeOrder = handleAsync<{ id: string }>(async (req, res) => {
@@ -59,6 +61,23 @@ export const placeOrder = handleAsync<{ id: string }>(async (req, res) => {
     .where(eq(products.id, productId))
     .execute();
 
+  addNotification({
+    title: `Product - ${product.title} has got order`,
+    userId: product.ownerId,
+    description: 'You can track order through dashboard'
+  });
+  addNotification({
+    title: `Order for product - ${product.title} placed successfully`,
+    userId: req.user.id
+  });
+  if (req.user.hasOptedNotification) {
+    sendMail({
+      to: req.user.email,
+      subject: `Order for proudct ${product.title} placed successfully`,
+      body: `<h3>The product will be deliverd at ${address} within 7 days. Thanks you for opting out platform</h3>`
+    });
+  }
+
   return res.json({ message: 'Your order is placed successfully' });
 });
 
@@ -93,6 +112,23 @@ export const updateOrder = handleAsync<{ id: string }>(async (req, res) => {
     .where(eq(orders.id, orderId))
     .execute();
 
+  if (delivered) {
+    const [product] = await db
+      .select({ title: products.title })
+      .from(products)
+      .where(eq(products.id, order.productId));
+    if (product?.title) {
+      addNotification({
+        title: `Product - ${product.title} is delivered succesfullly to ${order.address}`,
+        userId: order.userId
+      });
+      addNotification({
+        title: `Product - ${product.title} is delivered to user successfully`,
+        userId: req.user.id
+      });
+    }
+  }
+
   return res.json({ message: 'Order updated successfully' });
 });
 
@@ -119,7 +155,19 @@ export const cancelOrder = handleAsync<{ id: string }>(async (req, res) => {
   db.update(products)
     .set({ stock: sql`${products.stock}+${order.quantity}` })
     .where(eq(products.id, order.productId))
-    .execute();
+    .returning()
+    .execute()
+    .then(([product]) => {
+      if (!product) return;
+      addNotification({
+        title: `Order for product ${product.title} is cancelled`,
+        userId: order.userId
+      });
+      addNotification({
+        title: `Order for product ${product.title} is cancelled`,
+        userId: order.sellerId
+      });
+    });
 
   return res.json({ message: 'Order cancelled successfully' });
 });

@@ -10,9 +10,11 @@ import {
   NotFoundException,
   UnauthorizedException
 } from '@/lib/exceptions';
+import { sendMail } from '@/lib/send-mail';
 import { handleAsync } from '@/middlewares/handle-async';
 import { products, selectProductSnapshot } from '@/schemas/product.schema';
 import { selectUserSnapshot, users } from '@/schemas/user.schema';
+import { addNotification } from '@/services/notification.service';
 import { and, asc, desc, eq, gte, ilike, lte } from 'drizzle-orm';
 
 export const createProduct = handleAsync(async (req, res) => {
@@ -39,6 +41,18 @@ export const createProduct = handleAsync(async (req, res) => {
 
   if (!result)
     throw new BadRequestException('Could not list product at the moment');
+
+  const title = `Product - ${data.title} listed for sale`;
+  const description = `The orders and stats of the product can now be tracked through dashboard`;
+  addNotification({ title, description, userId: req.user.id });
+  if (req.user.hasOptedNotification) {
+    sendMail({
+      to: req.user.email,
+      subject: title,
+      body: `<h3>${description}</h3>`
+    });
+  }
+
   return res.status(201).json({
     product: {
       ...result,
@@ -92,12 +106,18 @@ export const deleteProduct = handleAsync<{ id: string }>(async (req, res) => {
   const [result] = await db
     .delete(products)
     .where(and(eq(products.id, productId), eq(products.ownerId, req.user.id)))
-    .returning({ id: products.id });
+    .returning({ id: products.id, title: products.title });
 
   if (!result)
     throw new BadRequestException(
       'Product already deleted or you are not allowed to delete this product'
     );
+
+  const title = `Product - ${result.title} deleted successfully`;
+  addNotification({ title, userId: req.user.id });
+  if (req.user.hasOptedNotification) {
+    sendMail({ to: req.user.email, subject: title, body: '' });
+  }
 
   return res.json({ message: 'Product deleted successfully' });
 });

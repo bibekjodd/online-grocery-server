@@ -31,3 +31,5 @@ export const notifications = pgTable(
     };
   }
 );
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;

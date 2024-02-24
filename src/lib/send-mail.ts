@@ -9,7 +9,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-export const sendMail = ({
+export const sendMail = async ({
   to,
   body,
   subject
@@ -18,5 +18,8 @@ export const sendMail = ({
   subject: string;
   body: string;
 }) => {
-  return transporter.sendMail({ to, subject, html: body });
+  return transporter
+    .sendMail({ to, subject, html: body })
+    .then((res) => res)
+    .catch(() => null);
 };

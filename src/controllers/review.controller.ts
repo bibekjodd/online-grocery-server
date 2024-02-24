@@ -8,6 +8,7 @@ import {
 import { handleAsync } from '@/middlewares/handle-async';
 import { reviews, selectReviewsSnapshot } from '@/schemas/review.schema';
 import { selectUserSnapshot, users } from '@/schemas/user.schema';
+import { addNotification } from '@/services/notification.service';
 import { and, desc, eq, lt } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 
@@ -35,6 +36,11 @@ export const postReview = handleAsync<{ id: string }>(async (req, res) => {
     .catch(() => {
       throw new BadRequestException('Provide required data to add review');
     });
+
+  addNotification({
+    title: `${req.user.name} has reviewed your profile`,
+    userId
+  });
 
   return res.json({ message: 'Reviewed successfully' });
 });

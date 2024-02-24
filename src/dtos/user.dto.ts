@@ -31,7 +31,8 @@ export const updateProfileSchema = z
     image: imageSchema.nullish(),
     state: z.string().max(30).optional(),
     district: z.string().max(30).optional(),
-    area: z.string().max(30).optional()
+    area: z.string().max(30).optional(),
+    hasOptedNotification: z.boolean().optional()
   })
   .refine((data) => {
     if (!data.name && !data.image) return false;

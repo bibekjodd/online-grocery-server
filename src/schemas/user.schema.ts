@@ -19,6 +19,9 @@ export const users = pgTable(
     image: varchar('image', { length: 200 }),
     isGoogleUser: boolean('is_google_user').notNull().default(false),
     isVerified: boolean('is_verified').notNull().default(false),
+    hasOptedNotification: boolean('has_opted_notification')
+      .notNull()
+      .default(false),
     role: varchar('role', { enum: ['user', 'admin'] })
       .notNull()
       .default('user'),
@@ -46,6 +49,7 @@ export const selectUserSnapshot = {
   role: users.role,
   createdAt: users.createdAt,
   isVerified: users.isVerified,
+  hasOptedNotification: users.hasOptedNotification,
   state: users.state,
   district: users.district,
   area: users.area
@@ -56,6 +60,7 @@ export type UserSnapshot = {
   email: string;
   image: string | null;
   isGoogleUser: boolean;
+  hasOptedNotification: boolean;
   role: 'user' | 'admin';
   createdAt: string;
   password?: undefined;
