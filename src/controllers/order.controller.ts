@@ -17,6 +17,7 @@ import { orders, selectOrderSnapshot } from '@/schemas/order.schema';
 import { products, selectProductSnapshot } from '@/schemas/product.schema';
 import { selectUserSnapshot, users } from '@/schemas/user.schema';
 import { addNotification } from '@/services/notification.service';
+import { updateOnSales } from '@/services/sales.service';
 import { and, desc, eq, lt, sql } from 'drizzle-orm';
 
 export const placeOrder = handleAsync<{ id: string }>(async (req, res) => {
@@ -49,9 +50,9 @@ export const placeOrder = handleAsync<{ id: string }>(async (req, res) => {
     address,
     paymentType,
     estimatedDeliveryDate,
-    price,
+    price: Math.ceil(price),
     productId: product.id,
-    totalPrice,
+    totalPrice: Math.ceil(totalPrice),
     userId: req.user.id,
     quantity
   });
@@ -113,6 +114,16 @@ export const updateOrder = handleAsync<{ id: string }>(async (req, res) => {
     .execute();
 
   if (delivered) {
+    const deliveryDays =
+      new Date(new Date().toISOString()).getDate() -
+      new Date(order.orderedAt).getDate();
+    updateOnSales({
+      amount: order.totalPrice,
+      quantity: order.quantity,
+      userId: order.sellerId,
+      productId: order.productId,
+      deliveryDays
+    });
     const [product] = await db
       .select({ title: products.title })
       .from(products)
@@ -147,6 +158,18 @@ export const cancelOrder = handleAsync<{ id: string }>(async (req, res) => {
 
   if (order.status !== 'processing')
     throw new BadRequestException(`Order is already ${order.status}`);
+
+  const deliveryDays =
+    new Date(new Date().toISOString()).getDate() -
+    new Date(order.orderedAt).getDate();
+  updateOnSales({
+    amount: 0,
+    deliveryDays,
+    quantity: order.quantity,
+    isCancelled: true,
+    productId: order.productId,
+    userId: order.sellerId
+  });
 
   db.update(orders)
     .set({ status: 'cancelled' })

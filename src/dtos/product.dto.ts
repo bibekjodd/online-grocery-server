@@ -26,7 +26,7 @@ export const createProductSchema = z.object({
     .positive()
     .max(100)
     .optional()
-    .transform((discount) => discount || 0)
+    .transform((discount) => Math.floor(discount || 0))
 });
 
 export const updateProductSchema = createProductSchema
