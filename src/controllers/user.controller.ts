@@ -56,14 +56,14 @@ export const logoutUser = handleAsync(async (req, res) => {
 export const deleteProfile = handleAsync(async (req, res) => {
   if (!req.user) throw new UnauthorizedException();
   await db.delete(users).where(eq(users.id, req.user.id));
-  req.session.destroy(() => {});
-  req.logout(() => {});
   sendMail({
     to: req.user.email,
-    body: `<h3>Mr/Mrs. ${req.user.name} your account is deleted successfully from our and all your associated entites are removed from the platform.
+    body: `<h3>Mr/Mrs. ${req.user.name} your account is deleted successfully from our platform and all your associated entites are removed from the platform.
     You can always get back with simple registration. Thanks</h3>`,
     subject: 'Account deleted'
   });
+  req.session.destroy(() => {});
+  req.logout(() => {});
   return res.json({ message: 'Profile deleted successfully' });
 });
 

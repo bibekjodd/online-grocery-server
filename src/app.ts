@@ -1,4 +1,5 @@
 import 'colors';
+import cors from 'cors';
 import { sql } from 'drizzle-orm';
 import express from 'express';
 import session from 'express-session';
@@ -24,6 +25,7 @@ validateEnv();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.enable('trust proxy');
+app.use(cors({ origin: env.FRONTEND_URLS, credentials: true }));
 if (env.NODE_ENV === 'development') {
   app.use(morgan('common'));
 }

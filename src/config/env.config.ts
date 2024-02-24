@@ -19,6 +19,10 @@ const envSchema = z
         port = Number(process.argv[indexOfPort + 1]) || 5000;
         return port;
       }),
+    FRONTEND_URLS: z
+      .string()
+      .optional()
+      .transform((urls) => (urls || '').split(' ')),
 
     DATABASE_URL: z.string(),
     MONGO_URI: z.string(),

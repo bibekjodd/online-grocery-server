@@ -14,7 +14,7 @@ const cookieOptions: CookieOptions = {
   httpOnly: true,
   secure: env.NODE_ENV === 'production' ? true : false,
   sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
-  maxAge: Date.now() + 30 * 24 * 60 * 60 * 1000
+  maxAge: 30 * 24 * 60 * 60 * 1000
 };
 
 export const sessionOptions: SessionOptions = {
