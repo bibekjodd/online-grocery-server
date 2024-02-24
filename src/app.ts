@@ -13,6 +13,7 @@ import { handleErrorRequest } from './middlewares/handle-error-request';
 import { GoogleStrategy } from './passport/google.strategy';
 import { LocalStrategy } from './passport/local.strategy';
 import { serializer } from './passport/serializer';
+import { notificationRoute } from './routes/notification.route';
 import { orderRoute } from './routes/order.route';
 import { productRoute } from './routes/product.route';
 import { reviewRoute } from './routes/review.route';
@@ -51,6 +52,7 @@ app.use('/api', userRoute);
 app.use('/api', productRoute);
 app.use('/api', reviewRoute);
 app.use('/api', orderRoute);
+app.use('/api', notificationRoute);
 app.use(() => {
   throw new NotFoundException();
 });
