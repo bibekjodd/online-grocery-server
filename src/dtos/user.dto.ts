@@ -28,7 +28,10 @@ export const loginUserSchema = z.object({
 export const updateProfileSchema = z
   .object({
     name: nameSchema.optional(),
-    image: imageSchema.nullish()
+    image: imageSchema.nullish(),
+    state: z.string().max(30).optional(),
+    district: z.string().max(30).optional(),
+    area: z.string().max(30).optional()
   })
   .refine((data) => {
     if (!data.name && !data.image) return false;

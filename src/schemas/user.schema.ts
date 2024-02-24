@@ -24,7 +24,10 @@ export const users = pgTable(
       .default('user'),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
       .notNull()
-      .defaultNow()
+      .defaultNow(),
+    state: varchar('state', { length: 30 }),
+    district: varchar('district', { length: 30 }),
+    area: varchar('area', { length: 30 })
   },
   function constraints(users) {
     return {
@@ -42,7 +45,10 @@ export const selectUserSnapshot = {
   isGoogleUser: users.isGoogleUser,
   role: users.role,
   createdAt: users.createdAt,
-  isVerified: users.isVerified
+  isVerified: users.isVerified,
+  state: users.state,
+  district: users.district,
+  area: users.area
 };
 export type UserSnapshot = {
   id: string;
@@ -54,4 +60,7 @@ export type UserSnapshot = {
   createdAt: string;
   password?: undefined;
   isVerified: boolean;
+  state: string | null;
+  district: string | null;
+  area: string | null;
 };

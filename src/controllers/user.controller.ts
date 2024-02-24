@@ -31,11 +31,8 @@ export const getProfile = handleAsync(async (req, res) => {
 
 export const updateProfile = handleAsync(async (req, res) => {
   if (!req.user) throw new UnauthorizedException();
-  const { name, image } = updateProfileSchema.parse(req.body);
-  db.update(users)
-    .set({ name, image })
-    .where(eq(users.id, req.user.id))
-    .execute();
+  const data = updateProfileSchema.parse(req.body);
+  db.update(users).set(data).where(eq(users.id, req.user.id)).execute();
   return res.json({ message: 'Profile updated successfully' });
 });
 
