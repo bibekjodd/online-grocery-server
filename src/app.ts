@@ -1,28 +1,44 @@
 import 'colors';
+import { sql } from 'drizzle-orm';
 import express from 'express';
+import session from 'express-session';
 import morgan from 'morgan';
+import passport from 'passport';
+import { db } from './config/database';
 import { env, validateEnv } from './config/env.config';
 import { NotFoundException } from './lib/exceptions';
-import { devConsole } from './lib/utils';
+import { devConsole, sessionOptions } from './lib/utils';
 import { handleAsync } from './middlewares/handle-async';
 import { handleErrorRequest } from './middlewares/handle-error-request';
+import { GoogleStrategy } from './passport/google.strategy';
+import { LocalStrategy } from './passport/local.strategy';
+import { serializer } from './passport/serializer';
 import { userRoute } from './routes/user.route';
 
 const app = express();
 validateEnv();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.enable('trust proxy');
 if (env.NODE_ENV === 'development') {
   app.use(morgan('common'));
 }
+app.use(session(sessionOptions));
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use('local', LocalStrategy);
+passport.use('google', GoogleStrategy);
+serializer();
 
 app.get(
   '/',
   handleAsync(async (req, res) => {
+    const [result] = await db.execute(sql`select version()`);
     return res.json({
       message: 'Api is running fine...',
       env: env.NODE_ENV,
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
+      database: result
     });
   })
 );

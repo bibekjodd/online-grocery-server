@@ -18,7 +18,24 @@ const envSchema = z
         if (indexOfPort === -1) return port;
         port = Number(process.argv[indexOfPort + 1]) || 5000;
         return port;
-      })
+      }),
+
+    DATABASE_URL: z.string(),
+    MONGO_URI: z.string(),
+    SESSION_SECRET: z.string(),
+
+    GOOGLE_CLIENT_ID: z.string(),
+    GOOGLE_CLIENT_SECRET: z.string(),
+    GOOGLE_CALLBACK_URL: z.string(),
+
+    AUTH_REDIRECT_URI: z
+      .string()
+      .optional()
+      .transform((uri) => uri || '/'),
+
+    SMTP_PASS: z.string(),
+    SMTP_MAIL: z.string(),
+    SMTP_SERVICE: z.string()
   })
   .readonly();
 
