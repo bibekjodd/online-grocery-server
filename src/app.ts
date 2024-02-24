@@ -13,6 +13,7 @@ import { handleErrorRequest } from './middlewares/handle-error-request';
 import { GoogleStrategy } from './passport/google.strategy';
 import { LocalStrategy } from './passport/local.strategy';
 import { serializer } from './passport/serializer';
+import { productRoute } from './routes/product.route';
 import { userRoute } from './routes/user.route';
 
 const app = express();
@@ -45,6 +46,7 @@ app.get(
 
 /* --------- routes --------- */
 app.use('/api', userRoute);
+app.use('/api', productRoute);
 app.use(() => {
   throw new NotFoundException();
 });
