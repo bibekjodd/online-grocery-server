@@ -1,18 +1,17 @@
+import { env } from '@/config/env.config';
 import { HttpException } from '@/lib/exceptions';
 import { ErrorRequestHandler } from 'express';
 import { ZodError } from 'zod';
 
-export const handleErrorRequest: ErrorRequestHandler = (
-  err,
-  req,
-  res,
-  next
-) => {
-  next;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const handleErrorRequest: ErrorRequestHandler = (err, req, res, next) => {
   let message = err.message || 'Internal Server Error';
+  let stack: string | undefined = undefined;
   let statusCode = err.statusCode || 500;
+
   if (err instanceof Error) {
     message = err.message || message;
+    if (env.NODE_ENV === 'development') stack = err.stack;
   }
 
   if (err instanceof HttpException) {
@@ -32,5 +31,5 @@ export const handleErrorRequest: ErrorRequestHandler = (
     }
   }
 
-  return res.status(statusCode).json({ message });
+  res.status(statusCode).json({ message, stack });
 };

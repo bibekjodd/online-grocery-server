@@ -1,25 +1,32 @@
 import { env } from '@/config/env.config';
 import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransport({
-  service: env.SMTP_SERVICE,
-  auth: {
-    user: env.SMTP_MAIL,
-    pass: env.SMTP_PASS
-  }
-});
-
-export const sendMail = async ({
-  to,
-  body,
-  subject
-}: {
-  to: string;
+export type SendMailOptions = {
+  text: string;
+  mail: string;
   subject: string;
-  body: string;
-}) => {
-  return transporter
-    .sendMail({ to, subject, html: body })
-    .then((res) => res)
-    .catch(() => null);
+};
+
+export const sendMail = async (...data: SendMailOptions[]) => {
+  if (env.NODE_ENV !== 'production') return;
+  const transporter = nodemailer.createTransport({
+    service: env.SMTP_SERVICE,
+    auth: {
+      user: env.SMTP_MAIL,
+      pass: env.SMTP_PASS
+    }
+  });
+
+  const promises: Promise<unknown>[] = [];
+  for (const { mail, text, subject } of data) {
+    promises.push(
+      transporter.sendMail({
+        html: text,
+        to: mail,
+        subject
+      })
+    );
+  }
+
+  return Promise.all(promises);
 };

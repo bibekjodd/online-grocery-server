@@ -1,8 +1,0 @@
-/*
-!dist
-!package.json
-!pnpm-lock.yaml
-!package-lock.json
-!yarn.lock
-!vercel.json
-!.vercelignore

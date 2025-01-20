@@ -43,3 +43,9 @@ export class PayloadTooLargeException extends HttpException {
     super(message, 413);
   }
 }
+
+export class InternalServerException extends HttpException {
+  constructor(message = 'Internal server error') {
+    super(message, 500);
+  }
+}

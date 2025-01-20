@@ -1,18 +1,12 @@
-import { EnvType } from '@/config/env.config';
-import { UserSnapshot } from './schemas/user.schema';
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+import { type User as UserProfile } from '@/db/users.schema';
 
 export {};
 declare global {
-  namespace NodeJS {
-    interface ProcessEnv extends EnvType {
-      //
-    }
-  }
-
   namespace Express {
-    interface User extends UserSnapshot {}
+    interface User extends UserProfile {}
     interface Request {
-      user: UserSnapshot;
+      user: UserProfile;
     }
   }
 }

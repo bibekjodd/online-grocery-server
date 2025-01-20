@@ -3,9 +3,7 @@ import { z } from 'zod';
 
 const envSchema = z
   .object({
-    NODE_ENV: z
-      .enum(['development', 'production', 'test'])
-      .default('development'),
+    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
     PORT: z
       .union([z.string(), z.number()])
       .default(5000)
@@ -39,7 +37,10 @@ const envSchema = z
 
     SMTP_PASS: z.string(),
     SMTP_MAIL: z.string(),
-    SMTP_SERVICE: z.string()
+    SMTP_SERVICE: z.string(),
+
+    STRIPE_SECRET_KEY: z.string(),
+    STRIPE_SECRET_WEBHOOK_KEY: z.string()
   })
   .readonly();
 
@@ -50,6 +51,7 @@ export const validateEnv = () => {
   try {
     return envSchema.parse(process.env);
   } catch (error) {
+    if (error instanceof Error) console.log(error.message);
     console.log(`Environment variables validation failed\nExitting app`.red);
     process.exit(1);
   }

@@ -1,8 +1,6 @@
-import { db } from '@/config/database';
 import { env } from '@/config/env.config';
-import { BadRequestException } from '@/lib/exceptions';
-import { selectUserSnapshot, users } from '@/schemas/user.schema';
-import { eq } from 'drizzle-orm';
+import { db } from '@/db';
+import { users } from '@/db/users.schema';
 import { Strategy } from 'passport-google-oauth20';
 
 export const GoogleStrategy = new Strategy(
@@ -14,32 +12,24 @@ export const GoogleStrategy = new Strategy(
   },
   async (req, accessToken, refreshToken, profile, done) => {
     try {
-      const id: string = profile.id;
       const name: string = profile.displayName;
       const email: string = profile.emails?.at(0)?.value || '';
       const image: string | null = profile.photos?.at(0)?.value || null;
-      let [user] = await db
-        .select(selectUserSnapshot)
-        .from(users)
-        .where(eq(users.email, email))
-        .limit(1);
 
-      if (user && !user.isGoogleUser) {
-        return done(
-          new BadRequestException(
-            'This account is previously signed in with credential authentication'
-          )
-        );
-      }
+      const [user] = await db
+        .insert(users)
+        .values({ name, email, image, authSource: 'google' })
+        .onConflictDoUpdate({
+          target: [users.email],
+          set: {
+            email
+          }
+        })
+        .returning()
+        .execute();
 
-      if (!user) {
-        [user] = await db
-          .insert(users)
-          .values({ id, name, email, image, isGoogleUser: true })
-          .returning(selectUserSnapshot);
-      }
       if (!user) return done(null, undefined);
-      done(null, user);
+      return done(null, user);
     } catch (err) {
       done(err as Error, undefined);
     }

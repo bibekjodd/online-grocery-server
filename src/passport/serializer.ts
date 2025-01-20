@@ -1,5 +1,5 @@
-import { db } from '@/config/database';
-import { selectUserSnapshot, users } from '@/schemas/user.schema';
+import { db } from '@/db';
+import { users } from '@/db/users.schema';
 import { eq } from 'drizzle-orm';
 import passport from 'passport';
 
@@ -9,14 +9,11 @@ export const serializer = () => {
   });
   passport.deserializeUser(async (id: string, done) => {
     try {
-      const [user] = await db
-        .select(selectUserSnapshot)
-        .from(users)
-        .where(eq(users.id, id));
-      if (!user) done(null, false);
-      done(null, user);
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      if (user) user.password = null;
+      return done(null, user || null);
     } catch (error) {
-      done(error, false);
+      return done(error, null);
     }
   });
 };

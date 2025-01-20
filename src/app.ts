@@ -1,27 +1,31 @@
 import 'colors';
+import cookieSession from 'cookie-session';
 import cors from 'cors';
 import { sql } from 'drizzle-orm';
 import express from 'express';
-import session from 'express-session';
 import morgan from 'morgan';
 import passport from 'passport';
-import { db } from './config/database';
 import { env, validateEnv } from './config/env.config';
+import { db } from './db';
 import { NotFoundException } from './lib/exceptions';
 import { devConsole, sessionOptions } from './lib/utils';
-import { handleAsync } from './middlewares/handle-async';
 import { handleErrorRequest } from './middlewares/handle-error-request';
+import { handleSessionRegenerate } from './middlewares/handle-session-regenerate';
+import { openApiSpecs, serveApiReference } from './openapi';
 import { GoogleStrategy } from './passport/google.strategy';
 import { LocalStrategy } from './passport/local.strategy';
 import { serializer } from './passport/serializer';
-import { notificationRoute } from './routes/notification.route';
-import { orderRoute } from './routes/order.route';
-import { productRoute } from './routes/product.route';
-import { reviewRoute } from './routes/review.route';
-import { userRoute } from './routes/user.route';
+import { authRoute } from './routes/auth.route';
+import { notificationsRoute } from './routes/notifications.route';
+import { ordersRoute } from './routes/orders.route';
+import { productsRoute } from './routes/products.route';
+import { reviewsRoute } from './routes/reviews.route';
+import { usersRoute } from './routes/users.route';
+import { webhooksRoute } from './routes/webhook.route';
 
 const app = express();
 validateEnv();
+app.use('/api/webhooks', express.text({ type: 'application/json' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.enable('trust proxy');
@@ -29,40 +33,44 @@ app.use(cors({ origin: env.FRONTEND_URLS, credentials: true }));
 if (env.NODE_ENV === 'development') {
   app.use(morgan('common'));
 }
-app.use(session(sessionOptions));
+app.use(cookieSession(sessionOptions));
+app.use(handleSessionRegenerate);
+// @ts-expect-error ...
 app.use(passport.initialize());
 app.use(passport.session());
 passport.use('local', LocalStrategy);
 passport.use('google', GoogleStrategy);
 serializer();
 
-app.get(
-  '/',
-  handleAsync(async (req, res) => {
-    const [result] = await db.execute(sql`select version()`);
-    return res.json({
-      message: 'Api is running fine...',
-      env: env.NODE_ENV,
-      date: new Date().toISOString(),
-      database: result
-    });
-  })
-);
+app.get('/', async (req, res) => {
+  const [result] = await db.execute(sql`select version()`);
+  res.json({
+    message: 'Api is running fine...',
+    env: env.NODE_ENV,
+    date: new Date().toISOString(),
+    database: result
+  });
+});
 
 /* --------- routes --------- */
-app.use('/api', userRoute);
-app.use('/api', productRoute);
-app.use('/api', reviewRoute);
-app.use('/api', orderRoute);
-app.use('/api', notificationRoute);
+app.use('/api/auth', authRoute);
+app.use('/api/users', usersRoute);
+app.use('/api/products', productsRoute);
+app.use('/api/orders', ordersRoute);
+app.use('/api/webhooks', webhooksRoute);
+app.use('/api/reviews', reviewsRoute);
+app.use('/api/notifications', notificationsRoute);
+app.get('/doc', (req, res) => {
+  res.json(openApiSpecs);
+});
+app.get('/reference', serveApiReference);
+
 app.use(() => {
   throw new NotFoundException();
 });
 app.use(handleErrorRequest);
 
-if (env.NODE_ENV !== 'test') {
-  app.listen(env.PORT, () => {
-    devConsole(`⚡[Server]: listening at http://localhost:${env.PORT}`.yellow);
-  });
-}
+app.listen(env.PORT, () => {
+  devConsole(`⚡[Server]: listening at http://localhost:${env.PORT}`.yellow);
+});
 export default app;
