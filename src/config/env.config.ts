@@ -23,17 +23,11 @@ const envSchema = z
       .transform((urls) => (urls || '').split(' ')),
 
     DATABASE_URL: z.string(),
-    MONGO_URI: z.string(),
     SESSION_SECRET: z.string(),
 
     GOOGLE_CLIENT_ID: z.string(),
     GOOGLE_CLIENT_SECRET: z.string(),
     GOOGLE_CALLBACK_URL: z.string(),
-
-    AUTH_REDIRECT_URI: z
-      .string()
-      .optional()
-      .transform((uri) => uri || '/'),
 
     SMTP_PASS: z.string(),
     SMTP_MAIL: z.string(),

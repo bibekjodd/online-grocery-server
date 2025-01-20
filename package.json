@@ -56,8 +56,6 @@
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.16",
     "@types/passport-local": "^1.0.38",
-    "@typescript-eslint/eslint-plugin": "^8.20.0",
-    "@typescript-eslint/parser": "^8.20.0",
     "eslint": "^9.18.0",
     "eslint-plugin-drizzle": "^0.2.3",
     "prettier": "^3.4.2",
